@@ -33,6 +33,7 @@ impl Renderer{
         Self::render_world(world, self.width, self.height, self.pixels.frame_mut(), );
 
         Self::draw_heart(self.pixels.frame_mut(), self.width, self.height);
+        Self::draw_circle(self.pixels.frame_mut(), self.width, self.height);
 
         
         self.pixels.render().expect("Failed to render pixels");
@@ -83,13 +84,11 @@ impl Renderer{
     }
 
     fn draw_heart(frame: &mut [u8], frame_width: u32, frame_height: u32){
-        let height = 10;
-        let width = 10;
+        let height = 100;
+        let width = 100;
 
         let center_x = frame_width/2;
         let center_y = frame_height/2;
-
-        println!("{center_x}");
 
         let start_x = center_x - width/2;
         let start_y = center_y - height/2;
@@ -99,13 +98,55 @@ impl Renderer{
 
         for y in 0..height{
             for x in 0..width{
+                let nx = (x as f32 / width as f32) * 2.0 - 1.0;
+                let ny = (y as f32 / height as f32) * 2.0 - 1.0;
+                let ny = -ny;
 
-                let px = start_x+x;
+                let a = nx * nx + ny * ny - 0.3;
+
+                if a * a * a - nx * nx * ny * ny * ny > 0.0 {
+                    continue;
+                }
+
+                let px = start_x + x;
                 let py = start_y + y;
 
-                let pixel_index = ((py * frame_width + px) *4) as usize;
+                let pixel_index = ((py * frame_width + px) * 4) as usize;
+                frame[pixel_index..pixel_index + 4].copy_from_slice(&color);
 
-                frame[pixel_index..pixel_index+4].copy_from_slice(&color);
+            }
+        }
+    }
+
+
+    fn draw_circle(frame: &mut [u8], frame_width: u32, frame_height: u32){
+        let height = 100;
+        let width = 100;
+
+        let center_x = frame_width/2;
+        let center_y = frame_height/2;
+
+        let start_x = center_x - width/2 - 100;
+        let start_y = center_y - height/2;
+
+        let color: [u8;4] =  [255,0,0,255];
+
+
+        for y in 0..height{
+            for x in 0..width{
+                let nx = (x as f32 / width as f32) * 2.0 - 1.0;
+                let ny = (y as f32 / height as f32) * 2.0 - 1.0;
+                let ny = -ny;
+
+                if nx * nx + ny * ny > 0.5 {
+                    continue;
+                }
+
+                let px = start_x + x;
+                let py = start_y + y;
+
+                let pixel_index = ((py * frame_width + px) * 4) as usize;
+                frame[pixel_index..pixel_index + 4].copy_from_slice(&color);
 
             }
         }
