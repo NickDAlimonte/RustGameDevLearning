@@ -1,6 +1,6 @@
 pub struct Tile{
-    size: u32,
-    color: [u8; 4],
+    pub size: u32,
+    pub color: [u8; 4],
 }
 
 impl Tile{

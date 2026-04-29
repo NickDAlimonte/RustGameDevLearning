@@ -7,10 +7,12 @@ use winit::{
     dpi::{PhysicalSize, PhysicalPosition},
 };
 use std::sync::Arc;
+use crate::game::game_world::GameWorld;
 
 pub struct App {
     pub window: Option<Arc<Window>>,
     pub renderer: Option<Renderer>,
+    pub world: GameWorld,
 }
 impl ApplicationHandler for App{
 
@@ -59,14 +61,23 @@ impl ApplicationHandler for App{
             }
             WindowEvent::RedrawRequested => {
                 if let Some(renderer) = &mut self.renderer {
-                    renderer.render();
+                    renderer.render(&self.world);
                 }
 
             }
 
             WindowEvent::Resized(new_size) => {
                 if let Some(renderer) = &mut self.renderer {
-                    renderer.resize(new_size.width, new_size.height)
+
+                    const TILE_SIZE: u32 = 32;
+
+                    let snapped_width = (new_size.width / TILE_SIZE) * TILE_SIZE;
+                    let snapped_height = (new_size.height / TILE_SIZE) * TILE_SIZE;
+
+                    renderer.resize(snapped_width, snapped_height);
+
+
+
                 }
             }
             _ =>{}
