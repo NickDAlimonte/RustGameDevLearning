@@ -32,8 +32,9 @@ impl Renderer{
 
         Self::render_world(world, self.width, self.height, self.pixels.frame_mut(), );
 
-        Self::draw_heart(self.pixels.frame_mut(), self.width, self.height);
-        Self::draw_circle(self.pixels.frame_mut(), self.width, self.height);
+        Self::draw_cube(self.pixels.frame_mut(), self.width, self.height);
+        //Self::draw_heart(self.pixels.frame_mut(), self.width, self.height);
+        //Self::draw_circle(self.pixels.frame_mut(), self.width, self.height);
 
         
         self.pixels.render().expect("Failed to render pixels");
@@ -104,7 +105,7 @@ impl Renderer{
 
                 let a = nx * nx + ny * ny - 0.3;
 
-                if a * a * a - nx * nx * ny * ny * ny > 0.0 {
+                if (a * a * a - nx * nx * ny * ny * ny) > 0.0 {
                     continue;
                 }
 
@@ -120,8 +121,8 @@ impl Renderer{
 
 
     fn draw_circle(frame: &mut [u8], frame_width: u32, frame_height: u32){
-        let height = 100;
-        let width = 100;
+        let height = 200;
+        let width = 200;
 
         let center_x = frame_width/2;
         let center_y = frame_height/2;
@@ -138,7 +139,7 @@ impl Renderer{
                 let ny = (y as f32 / height as f32) * 2.0 - 1.0;
                 let ny = -ny;
 
-                if nx * nx + ny * ny > 0.5 {
+                if (nx * nx+ ny * ny) > 0.5 {
                     continue;
                 }
 
@@ -148,6 +149,71 @@ impl Renderer{
                 let pixel_index = ((py * frame_width + px) * 4) as usize;
                 frame[pixel_index..pixel_index + 4].copy_from_slice(&color);
 
+            }
+        }
+    }
+
+    //AI written cube********* I don't know how to do this.
+    fn draw_cube(frame: &mut [u8], frame_width: u32, frame_height: u32) {
+        let color = [255, 255, 255, 255];
+
+        // Cube vertices
+        let cube = [
+            [-1.0, -1.0, -1.0],
+            [ 1.0, -1.0, -1.0],
+            [ 1.0,  1.0, -1.0],
+            [-1.0,  1.0, -1.0],
+            [-1.0, -1.0,  1.0],
+            [ 1.0, -1.0,  1.0],
+            [ 1.0,  1.0,  1.0],
+            [-1.0,  1.0,  1.0],
+        ];
+
+        // Edges (pairs of vertex indices)
+        let edges = [
+            (0,1),(1,2),(2,3),(3,0),
+            (4,5),(5,6),(6,7),(7,4),
+            (0,4),(1,5),(2,6),(3,7),
+        ];
+
+        // Project 3D → 2D
+        let mut projected = [[0i32; 2]; 8];
+        let distance = 4.0;
+        let scale = 180.0;
+
+        for i in 0..8 {
+            let x = cube[i][0];
+            let y = cube[i][1];
+            let z = cube[i][2] + distance;
+
+            projected[i][0] = (frame_width as f32 / 2.0 + (x / z) * scale) as i32;
+            projected[i][1] = (frame_height as f32 / 2.0 - (y / z) * scale) as i32;
+        }
+
+        // Draw lines (Bresenham)
+        for &(a, b) in &edges {
+            let mut x0 = projected[a][0];
+            let mut y0 = projected[a][1];
+            let x1 = projected[b][0];
+            let y1 = projected[b][1];
+
+            let dx = (x1 - x0).abs();
+            let dy = -(y1 - y0).abs();
+            let sx = if x0 < x1 { 1 } else { -1 };
+            let sy = if y0 < y1 { 1 } else { -1 };
+            let mut err = dx + dy;
+
+            loop {
+                if x0 >= 0 && y0 >= 0 && x0 < frame_width as i32 && y0 < frame_height as i32 {
+                    let idx = ((y0 as u32 * frame_width + x0 as u32) * 4) as usize;
+                    frame[idx..idx + 4].copy_from_slice(&color);
+                }
+
+                if x0 == x1 && y0 == y1 { break; }
+
+                let e2 = 2 * err;
+                if e2 >= dy { err += dy; x0 += sx; }
+                if e2 <= dx { err += dx; y0 += sy; }
             }
         }
     }
